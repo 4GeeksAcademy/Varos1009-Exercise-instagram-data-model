@@ -1,32 +1,94 @@
 import os
 import sys
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy import Column, ForeignKey, Integer, String , Enum
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
-from eralchemy2 import render_er
+from eralchemy2 import render_er 
 
 Base = declarative_base()
 
-class Person(Base):
-    __tablename__ = 'person'
-    # Here we define columns for the table person
-    # Notice that each column is also a normal Python instance attribute.
+class User(Base):
+    __tablename__ = 'user'
+   
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    username = Column(String(25), nullable=False, index=True)
+    firstname = Column(String(25),nullable=False)
+    lastname = Column(String(25),nullable=False)
+    email = Column(String(30),nullable=False,unique=True)
 
-class Address(Base):
-    __tablename__ = 'address'
-    # Here we define columns for the table address.
-    # Notice that each column is also a normal Python instance attribute.
+    def serialize(self):
+        return{
+            'id' : self.id,
+            'username' : self.username,
+            'firstname' : self.firstname,
+            'lastname' : self.lastname,
+            'email' : self.email,
+
+        }
+
+class Follower(Base):
+    __tablename__ = 'follower'
+
+    user_from_id = Column(Integer,ForeignKey(User.id), primary_key=True)
+    user_to_id = Column(Integer,ForeignKey(User.id))
+
+    def serialize(self):
+        return{
+            'user_from_id' : self.user_from_id,
+            'user_to_id' : self.user_to_id,
+        }   
+
+
+class Post(Base):
+    __tablename__ = 'post'
+
+    id = Column(Integer,primary_key=True)
+    user_id = Column(Integer,ForeignKey(User.id))
+
+
+    def serialize(self):
+        return{
+            'id' : self.id,
+            'user_id' : self.user_id
+        }
+    
+
+class Comment(Base):
+    __tablename__ = 'comment'
+
     id = Column(Integer, primary_key=True)
-    street_name = Column(String(250))
-    street_number = Column(String(250))
-    post_code = Column(String(250), nullable=False)
-    person_id = Column(Integer, ForeignKey('person.id'))
-    person = relationship(Person)
+    comment_text = Column(String(25))
+    author_id = Column(Integer,ForeignKey(User.id))
+    post_id = Column(Integer,ForeignKey(Post.id))
+    
 
-    def to_dict(self):
-        return {}
+    def serialize(self):
+        return{
+            'id' : self.id,
+            'comment_text' : self.comment_text,
+            'author_id' : self.author_id,
+            'post_id' : self.post_id,
+        }
+    
+
+class Media(Base):
+    __tablename__ = 'media'
+    id = Column(Integer, primary_key=True)
+    type =  Column(Enum,nullable=False)
+    url = Column(String(30),nullable=False)
+    post_id = Column(Integer, ForeignKey(Post.id))
+   
+
+    def serialize(self):
+        return{
+            'id' : self.id,
+            'type' : self.type,
+            'url' : self.url,
+            'post_id' : self.post_id,
+        }
+
+    
 
 ## Draw from SQLAlchemy base
 try:
